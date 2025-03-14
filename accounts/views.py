@@ -9,8 +9,10 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from .serializers import UserSerializer
 from .models import CustomUser
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
-
+@swagger_auto_schema(method='post', request_body=UserSerializer)
 @api_view(['POST'])
 def signup(request):
     serializer = UserSerializer(data=request.data)
@@ -46,6 +48,8 @@ def signup(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+@swagger_auto_schema(method='post', request_body=UserSerializer)
 @api_view(['POST'])
 def login(request):
     username = request.data.get('username')
@@ -77,7 +81,21 @@ def login(request):
         }
     }, status=status.HTTP_401_UNAUTHORIZED)
 
-
+@swagger_auto_schema(
+    method='get',
+    operation_summary="토큰 유효성 검사",
+    responses={
+        200: openapi.Response('토큰이 유효합니다.', openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+            'message': openapi.Schema(type=openapi.TYPE_STRING, example='토큰이 유효합니다.')
+        })),
+        401: openapi.Response('유효하지 않은 토큰', openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+            'error': openapi.Schema(type=openapi.TYPE_OBJECT, properties={
+                'code': openapi.Schema(type=openapi.TYPE_STRING),
+                'message': openapi.Schema(type=openapi.TYPE_STRING)
+            })
+        }))
+    }
+)
 @api_view(['GET'])
 def validate_token(request):
     token = request.headers.get('Authorization')
